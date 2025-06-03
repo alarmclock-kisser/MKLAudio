@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.14.36127.28
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MKLAudio", "MKLAudio\MKLAudio.csproj", "{57C3E293-3403-40D2-AEFB-3D1A2106A07B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "MKLAudio.Tests", "MKLAudio.Tests\MKLAudio.Tests.csproj", "{CCD74FC7-352B-4FEF-9448-8B7D93A33F83}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{57C3E293-3403-40D2-AEFB-3D1A2106A07B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{57C3E293-3403-40D2-AEFB-3D1A2106A07B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{57C3E293-3403-40D2-AEFB-3D1A2106A07B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{57C3E293-3403-40D2-AEFB-3D1A2106A07B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{CCD74FC7-352B-4FEF-9448-8B7D93A33F83}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{CCD74FC7-352B-4FEF-9448-8B7D93A33F83}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{CCD74FC7-352B-4FEF-9448-8B7D93A33F83}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{CCD74FC7-352B-4FEF-9448-8B7D93A33F83}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {E70362DF-8A1E-4248-9361-732A8B7FC6F2}
+	EndGlobalSection
+EndGlobal
