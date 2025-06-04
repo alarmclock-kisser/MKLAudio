@@ -602,11 +602,70 @@ namespace MKLAudio
 			this.KernelCompiler.BuildInputPanel(panel, showInvariables);
 		}
 
+		public void SelectLatestKernel(ComboBox comboBox)
+		{
+			// From combobox items, select the latest kernel
+			if (comboBox == null || comboBox.Items.Count == 0)
+			{
+				this.Log("No kernels available", "Cannot select latest kernel", 1);
+				return;
+			}
 
+			// Get kernel names from items
+			List<string> kernelNames = comboBox.Items.Cast<string>().ToList();
+			if (kernelNames.Count == 0)
+			{
+				this.Log("No kernel names found in combo box", "Cannot select latest kernel", 1);
+				return;
+			}
+
+			// Get kernel files from compiler
+			if (this.KernelCompiler == null || this.KernelCompiler.Files == null || this.KernelCompiler.Files.Count == 0)
+			{
+				this.Log("Kernel compiler not initialized or no files available", "Cannot select latest kernel", 1);
+				return;
+			}
+
+			List<string> kernelFiles = this.KernelCompiler.Files.Keys.ToList();
+
+			// Sort by last modified date
+			kernelFiles.Sort((a, b) =>
+			{
+				DateTime aDate = File.GetLastWriteTime(Path.Combine(this.KernelPath, a));
+				DateTime bDate = File.GetLastWriteTime(Path.Combine(this.KernelPath, b));
+				return bDate.CompareTo(aDate); // Sort descending
+			});
+			if (kernelFiles.Count == 0)
+			{
+				this.Log("No kernel files found", "Cannot select latest kernel", 1);
+				return;
+			}
+
+			// While indexof latest kernel file is not in combo box items, loop through kernel files
+			int latestIndex = -1;
+			for (int i = 0; i < kernelFiles.Count; i++)
+			{
+				string kernelFile = Path.GetFileNameWithoutExtension(kernelFiles[i]);
+				if (kernelNames.Contains(kernelFile))
+				{
+					latestIndex = kernelNames.IndexOf(kernelFile);
+					break;
+				}
+			}
+
+			if (latestIndex == -1)
+			{
+				this.Log("No latest kernel found in combo box", "Cannot select latest kernel", 1);
+				return;
+			}
+
+			// Select latest kernel in combo box
+			comboBox.SelectedIndex = latestIndex;
+		}
 
 
 		// ----- ----- ----- ACCESSIBLE METHODS ----- ----- ----- \\
-		public IntPtr MoveAudio(AudioObject obj, int chunkSize = 0, float overlap = 0.0f, float stretchFactor = 1.00000f, bool log = false)
+		public IntPtr MoveAudio(AudioObject obj, int chunkSize = 0, float overlap = 0.0f, double stretchFactor = 1.00000f, bool log = false)
 		{
 			// Move audio host <-> device
 			if (obj.OnHost)
@@ -715,7 +774,7 @@ namespace MKLAudio
 			}
 
 			// Execute kernel on device
-			obj.Pointer = this.KernelExecutioner.ExecuteAudioKernel(obj.Pointer, out float factor, obj.Length, kernelBaseName + kernelVersion, chunkSize, overlap, obj.Samplerate, obj.Bitdepth, obj.Channels, optionalArguments, log);
+			obj.Pointer = this.KernelExecutioner.ExecuteAudioKernel(obj.Pointer, out double factor, obj.Length, kernelBaseName + kernelVersion, chunkSize, overlap, obj.Samplerate, obj.Bitdepth, obj.Channels, optionalArguments, log);
 			if (obj.Pointer == IntPtr.Zero && log)
 			{
 				this.Log("Failed to execute audio kernel", "Pointer=" + obj.Pointer.ToString("X16"), 1);
@@ -728,7 +787,7 @@ namespace MKLAudio
 			if (factor != 1.00f)
 			{
 				obj.Bpm = (float) (obj.Bpm / factor);
-				this.Log("Factor for audio kernel: " + factor.ToString("F5"), "Pointer=" + obj.Pointer.ToString("X16") + " BPM: " + obj.Bpm, 1);
+				this.Log("Factor for audio kernel: " + factor, "Pointer=" + obj.Pointer.ToString("X16") + " BPM: " + obj.Bpm, 1);
 			}
 
 			// Move back optionally

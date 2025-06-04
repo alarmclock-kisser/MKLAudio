@@ -13,6 +13,7 @@ namespace MKLAudio
 
 		public OpenClService Service;
 
+		public BatchProcessor? BatchP = null;
 
 
 
@@ -51,6 +52,9 @@ namespace MKLAudio
 			// Load resources
 			this.AudioH.LoadResourcesAudios();
 			this.ImageH.LoadResourcesImages();
+
+			// Select latest stretch kernel
+			this.Service.SelectLatestKernel(this.comboBox_kernelsStretch);
 		}
 
 
@@ -347,10 +351,22 @@ namespace MKLAudio
 			}
 
 			// Get optional args
-			Dictionary<string, object> optionalArgs = new()
+			Dictionary<string, object> optionalArgs;
+			if (kernelName.ToLower().Contains("double"))
 			{
-				{ "factor", (float) this.numericUpDown_stretchFactor.Value }
-			};
+				// Double kernel
+				optionalArgs = new()
+				{
+					{ "factor", (double) this.numericUpDown_stretchFactor.Value }
+				};
+			}
+			else
+			{
+				optionalArgs = new()
+				{
+					{ "factor", (float) this.numericUpDown_stretchFactor.Value }
+				};
+			}
 
 			// Exec
 			this.Service.ExecuteAudioKernel(
@@ -458,6 +474,43 @@ namespace MKLAudio
 
 
 			this.VideoH.RenderVideo(exportPath, "export", ".mp4", frameRate);
+		}
+
+		private void button_kernelSelectLatest_Click(object sender, EventArgs e)
+		{
+			this.Service.SelectLatestKernel(this.comboBox_kernelsStretch);
+		}
+
+		private void button_batch_Click(object sender, EventArgs e)
+		{
+			// Check input path from textbox
+			string text = this.textBox_batchInputPath.Text.Trim();
+			string inputPath = string.IsNullOrEmpty(text) ? Path.Combine(this.Repopath, "Resources") : text;
+			if (!Directory.Exists(inputPath) || inputPath == this.Repopath || inputPath == Path.Combine(this.Repopath, "Resources"))
+			{
+				// If the path is invalid or points to the repo root or Resources, ask user to use default Resources path
+				if (DialogResult.Yes == MessageBox.Show("Invalid input path. Take \\Resources path as input?", "Error", MessageBoxButtons.YesNo, MessageBoxIcon.Error))
+				{
+					inputPath = Path.Combine(this.Repopath, "Resources");
+				}
+				else
+				{
+					return;
+				}
+			}
+
+			// Output path is always Resources\Output
+			string outputPath = Path.Combine(inputPath, "Output");
+			if (!Directory.Exists(outputPath))
+			{
+				Directory.CreateDirectory(outputPath);
+			}
+
+			string kernelName = this.comboBox_kernelsStretch.SelectedItem?.ToString() ?? "timestretch";
+			float targetBpm = (float) this.numericUpDown_bpmTarget.Value;
+
+			this.BatchP?.Dispose();
+			this.BatchP = new BatchProcessor(this.Repopath, inputPath, outputPath, this.Service, kernelName, targetBpm, this.listBox_log, this.progressBar_batch);
 		}
 	}
 }

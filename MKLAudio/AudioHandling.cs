@@ -123,6 +123,9 @@ namespace MKLAudio
 
 		private void SetupEventHandlers()
 		{
+			this._zoomNumeric.Maximum = 16384;
+			this._zoomNumeric.Value = 128;
+
 			this._playButton.Click += (s, e) => this.TogglePlayback();
 
 			this._wavePicture.Paint += this.WavePicture_Paint;
@@ -732,6 +735,9 @@ namespace MKLAudio
 				track.Dispose();
 			}
 
+			this._tracks.Clear();
+			this._tracksList.Items.Clear();
+
 			this._wavePicture.Image?.Dispose();
 			GC.SuppressFinalize(this);
 		}
@@ -1053,7 +1059,7 @@ namespace MKLAudio
 			this.Pointer = IntPtr.Zero; // Setze Pointer auf 0, da wir auf dem Host sind
 		}
 
-		public void AggregateStretchedChunks(List<float[]> chunks, float stretchFactor, bool nullPointer = true)
+		public void AggregateStretchedChunksFloat(List<float[]> chunks, double stretchFactor, bool nullPointer = true)
 		{
 			if (chunks == null || chunks.Count == 0)
 			{
@@ -1135,6 +1141,103 @@ namespace MKLAudio
 			this.Data = output;
 			this.Length = output.Length;
 			this.Pointer = IntPtr.Zero;
+		}
+
+		public void AggregateStretchedChunks(List<float[]> chunks, double stretchFactor, bool nullPointer = true)
+		{
+			if (chunks == null || chunks.Count == 0)
+			{
+				return;
+			}
+
+			int chunkSize = this.ChunkSize;
+			int overlapSize = this.OverlapSize;
+
+			// Berechne gestreckte Hop-Size (gerundet für Integer-Offsets)
+			int originalHopSize = chunkSize - overlapSize;
+			// stretchedHopSize verwendet jetzt double für die Berechnung, bevor gerundet wird
+			int stretchedHopSize = (int) Math.Round(originalHopSize * stretchFactor);
+
+			// Gesamtlänge des Output-Signals
+			int outputLength = (chunks.Count - 1) * stretchedHopSize + chunkSize;
+
+			// Zielpuffer
+			// Der finale Output ist float[], da es Audio-Samples sind.
+			// Die Akkumulation erfolgt jedoch mit double zur Präzision.
+			double[] outputAccumulator = new double[outputLength];
+			double[] weightSum = new double[outputLength]; // Auch weightSum als double
+
+			// Fensterfunktion (Hann-Fenster für besseres Overlap-Add)
+			// Fensterwerte sollten ebenfalls double sein für höchste Präzision
+			double[] window = new double[chunkSize];
+			for (int i = 0; i < chunkSize; i++)
+			{
+				// Math.PI ist bereits double, aber explizite Casts und double-Literale
+				window[i] = 0.5 * (1.0 - Math.Cos(2.0 * Math.PI * i / (double) (chunkSize - 1)));
+			}
+
+			// Parallel verarbeiten
+			Parallel.For(0, chunks.Count,
+				() => (new double[outputLength], new double[outputLength]), // Lokale Akkumulatoren sind double
+
+				(i, state, local) =>
+				{
+					double[] localData = local.Item1;
+					double[] localWeight = local.Item2;
+					float[] chunk = chunks[i]; // Input-Chunk ist immer noch float[]
+
+					// Offset mit gestreckter Hop-Size
+					int offset = i * stretchedHopSize;
+
+					// Overlap-Add mit Fensterung
+					for (int j = 0; j < Math.Min(chunkSize, chunk.Length); j++)
+					{
+						int idx = offset + j;
+						if (idx >= outputLength)
+						{
+							break;
+						}
+
+						// float[] chunk[j] muss zu double gecastet werden für die Berechnungen
+						double windowedSample = (double) chunk[j] * window[j];
+						localData[idx] += windowedSample;
+						localWeight[idx] += window[j]; // Gewichtung durch Fenster
+					}
+					return (localData, localWeight);
+				},
+
+				local =>
+				{
+					// Sperren, um Race Conditions beim Aggregieren zu vermeiden
+					lock (outputAccumulator) // Lock auf outputAccumulator, da dies das globale Ziel ist
+					{
+						for (int i = 0; i < outputLength; i++)
+						{
+							outputAccumulator[i] += local.Item1[i];
+							weightSum[i] += local.Item2[i];
+						}
+					}
+				}
+			);
+
+			// Normalisierung (Fensterkompensation)
+			// Hier wird vom double-Akkumulator auf das finale float[] umgewandelt
+			float[] finalOutput = new float[outputLength];
+			Parallel.For(0, outputLength, i =>
+			{
+				if (weightSum[i] > 1e-6) // Verwende double-Literal für den Schwellenwert
+				{
+					finalOutput[i] = (float) (outputAccumulator[i] / weightSum[i]); // Cast back to float
+				}
+				else
+				{
+					finalOutput[i] = 0.0f;
+				}
+			});
+
+			this.Data = finalOutput;
+			this.Length = finalOutput.Length;
+			this.Pointer = nullPointer ? IntPtr.Zero : this.Pointer; // Updated Pointer assignment based on nullPointer
 		}
 
 		public void AggregateComplexes(List<Vector2[]> complexChunks)
@@ -1474,67 +1577,88 @@ namespace MKLAudio
 		}
 
 
-		public string? Export()
+		public string? Export(string outPath = "")
 		{
-			string fileName = $"{this.Name} [{this.Bpm:F1}].wav";
+			string baseFileName = $"{this.Name} [{this.Bpm:F1}]"; // Dateiname ohne Extension
 
-			using SaveFileDialog sfd = new();
-			sfd.Title = "Export audio file";
-			sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
-			sfd.Filter = "Wave files (*.wav)|*.wav|MP3 files (*.mp3)|*.mp3";
-			sfd.OverwritePrompt = true;
-			sfd.FileName = fileName;
+			string filePath; // Der finale Pfad zum Speichern
 
-			if (sfd.ShowDialog() == DialogResult.OK)
+			// Prüfen, ob ein gültiger outPath angegeben wurde
+			if (!string.IsNullOrEmpty(outPath) && Directory.Exists(outPath))
+			{
+				// Direkt im angegebenen outPath speichern
+				// Hier musst du die Dateierweiterung selbst bestimmen oder defaulten
+				// Annahme: Wenn outPath angegeben, soll es eine WAV-Datei sein, es sei denn, outPath enthält bereits einen vollständigen Dateinamen
+				if (Path.HasExtension(outPath))
+				{
+					filePath = outPath; // outPath ist bereits ein vollständiger Dateipfad
+				}
+				else
+				{
+					filePath = Path.Combine(outPath, baseFileName + ".wav"); // Standardmäßig als WAV speichern
+				}
+
+				// Optional: Überschreiben überprüfen, wenn du hier ein Prompt möchtest
+				// if (File.Exists(filePath)) { /* Prompt user or handle as needed */ }
+			}
+			else // Kein gültiger outPath, Dialog öffnen
+			{
+				using SaveFileDialog sfd = new();
+				sfd.Title = "Export audio file";
+				sfd.InitialDirectory = Environment.GetFolderPath(Environment.SpecialFolder.MyMusic);
+				sfd.Filter = "Wave files (*.wav)|*.wav|MP3 files (*.mp3)|*.mp3";
+				sfd.OverwritePrompt = true;
+				sfd.FileName = baseFileName + ".wav"; // Standard Dateiname mit Extension
+
+				if (sfd.ShowDialog() == DialogResult.OK)
+				{
+					filePath = sfd.FileName;
+				}
+				else
+				{
+					return null; // Benutzer hat den Dialog abgebrochen
+				}
+			}
+
+			// Ab hier beginnt die gemeinsame Logik für beide Fälle (direkt exportieren oder Dialog)
+			try
 			{
 				byte[] bytes = this.GetBytes();
 				WaveFormat waveFormat = WaveFormat.CreateIeeeFloatWaveFormat(this.Samplerate, this.Channels);
 
 				using (RawSourceWaveStream stream = new(new MemoryStream(bytes), waveFormat))
-				using (FileStream fileStream = new(sfd.FileName, FileMode.Create))
+				using (FileStream fileStream = new(filePath, FileMode.Create))
 				{
 					WaveFileWriter.WriteWavFileToStream(fileStream, stream);
 				}
 
-				// Add id3 tag for bpm if not 0 (mp3)
-				if (this.Bpm > 0.0f && Path.GetExtension(sfd.FileName).Equals(".mp3", StringComparison.OrdinalIgnoreCase))
+				// Add ID3 tag for BPM (for both MP3 and WAV if TagLib supports it for WAV)
+				if (this.Bpm > 0.0f)
 				{
 					try
 					{
-						using (var file = TagLib.File.Create(sfd.FileName))
+						using (var file = TagLib.File.Create(filePath))
 						{
+							// TagLib speichert BPM für MP3 und WAV (als TXXX Frame in RIFF INFO Chunk für WAV)
 							file.Tag.BeatsPerMinute = (uint) (this.Bpm * 100);
 							file.Save();
 						}
 					}
 					catch (Exception ex)
 					{
-						Debug.WriteLine($"Fehler beim Hinzufügen der BPM-ID3-Tags: {ex.Message}");
+						Debug.WriteLine($"Fehler beim Hinzufügen der BPM-Tags für '{Path.GetExtension(filePath)}': {ex.Message}");
 					}
 				}
 
-				// Add id3 tag for bpm (wav)
-				if (this.Bpm > 0.0f && Path.GetExtension(sfd.FileName).Equals(".wav", StringComparison.OrdinalIgnoreCase))
-				{
-					try
-					{
-						using (var file = TagLib.File.Create(sfd.FileName))
-						{
-							file.Tag.BeatsPerMinute = (uint) (this.Bpm * 100);
-							file.Save();
-						}
-					}
-					catch (Exception ex)
-					{
-						Debug.WriteLine($"Fehler beim Hinzufügen der BPM-ID3-Tags: {ex.Message}");
-					}
-				}
-
-				return sfd.FileName;
+				return filePath;
 			}
-			return null;
+			catch (Exception ex)
+			{
+				Debug.WriteLine($"Fehler beim Exportieren der Audiodatei: {ex.Message}");
+				// Optional: MessageBox.Show("Fehler beim Exportieren: " + ex.Message);
+				return null;
+			}
 		}
-
 		public void Reload()
 		{
 			// Null pointer

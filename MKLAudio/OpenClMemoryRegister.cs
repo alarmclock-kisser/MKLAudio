@@ -425,7 +425,7 @@ namespace MKLAudio
 			return obj.Pointer;
 		}
 
-		public IntPtr PullAudio(AudioObject obj, float stretchFactor = 1.0f, bool free = true, bool log = false)
+		public IntPtr PullAudio(AudioObject obj, double stretchFactor = 1.0d, bool free = true, bool log = false)
 		{
 			IntPtr pointer = obj.Pointer;
 			if (pointer == IntPtr.Zero)
@@ -448,7 +448,7 @@ namespace MKLAudio
 			}
 
 			// If stretchFactor != 1.0f, stretch chunks
-			if (stretchFactor - 1.0f != 0.00000f)
+			if (stretchFactor - 1.0d != 0.00000d)
 			{
 				obj.AggregateStretchedChunks(chunks, stretchFactor, true);
 			}

@@ -20,6 +20,7 @@
     <Folder Include="Kernels\Audio\Beat\" />
     <Folder Include="Kernels\Audio\TEST\" />
     <Folder Include="Resources\ExportedVideos\" />
+    <Folder Include="Resources\Output\" />
   </ItemGroup>
 
 </Project>

@@ -80,7 +80,7 @@ namespace MKLAudio
             };
             this.PropertyChanged += (s, e) =>
             {
-                if (e.PropertyName == nameof(ImageHandling.CurrentImage))
+                if (e.PropertyName == nameof(CurrentImage))
                 {
                     this.ViewPBox.Image = this.CurrentImage;
 

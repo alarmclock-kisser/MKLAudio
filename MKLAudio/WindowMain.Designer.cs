@@ -63,10 +63,15 @@
 			this.button_normalize = new Button();
 			this.button_reset = new Button();
 			this.groupBox_stretching = new GroupBox();
+			this.button_batch = new Button();
+			this.textBox_batchInputPath = new TextBox();
+			this.button_kernelSelectLatest = new Button();
 			this.comboBox_kernelsStretch = new ComboBox();
 			this.button_stretch = new Button();
 			this.label_info_stretchFactor = new Label();
+			this.label_info_chunkSize = new Label();
 			this.numericUpDown_stretchFactor = new NumericUpDown();
+			this.label_info_overlap = new Label();
 			this.label_info_targetBpm = new Label();
 			this.numericUpDown_bpmTarget = new NumericUpDown();
 			this.label_info_startBpm = new Label();
@@ -87,14 +92,15 @@
 			this.button_exportImage = new Button();
 			this.button_importImage = new Button();
 			this.button_moveImage = new Button();
-			this.label_info_overlap = new Label();
-			this.label_info_chunkSize = new Label();
 			this.numericUpDown_zoomImage = new NumericUpDown();
 			this.button_info = new Button();
 			this.groupBox_video = new GroupBox();
 			this.button_renderVideo = new Button();
 			this.label_info_fps = new Label();
 			this.numericUpDown_framerate = new NumericUpDown();
+			this.label_info_zoomAudio = new Label();
+			this.label_info_timestamp = new Label();
+			this.progressBar_batch = new ProgressBar();
 			((System.ComponentModel.ISupportInitialize) this.pictureBox_wave).BeginInit();
 			((System.ComponentModel.ISupportInitialize) this.numericUpDown_zoom).BeginInit();
 			((System.ComponentModel.ISupportInitialize) this.numericUpDown_overlap).BeginInit();
@@ -283,7 +289,7 @@
 			// 
 			this.numericUpDown_overlap.DecimalPlaces = 3;
 			this.numericUpDown_overlap.Increment = new decimal(new int[] { 5, 0, 0, 131072 });
-			this.numericUpDown_overlap.Location = new Point(1807, 612);
+			this.numericUpDown_overlap.Location = new Point(92, 107);
 			this.numericUpDown_overlap.Maximum = new decimal(new int[] { 9, 0, 0, 65536 });
 			this.numericUpDown_overlap.Name = "numericUpDown_overlap";
 			this.numericUpDown_overlap.Size = new Size(85, 23);
@@ -292,13 +298,13 @@
 			// 
 			// numericUpDown_chunkSize
 			// 
-			this.numericUpDown_chunkSize.Location = new Point(1721, 612);
+			this.numericUpDown_chunkSize.Location = new Point(6, 107);
 			this.numericUpDown_chunkSize.Maximum = new decimal(new int[] { 65536, 0, 0, 0 });
 			this.numericUpDown_chunkSize.Minimum = new decimal(new int[] { 32, 0, 0, 0 });
 			this.numericUpDown_chunkSize.Name = "numericUpDown_chunkSize";
 			this.numericUpDown_chunkSize.Size = new Size(80, 23);
 			this.numericUpDown_chunkSize.TabIndex = 19;
-			this.numericUpDown_chunkSize.Value = new decimal(new int[] { 1024, 0, 0, 0 });
+			this.numericUpDown_chunkSize.Value = new decimal(new int[] { 512, 0, 0, 0 });
 			// 
 			// listBox_pointers
 			// 
@@ -447,22 +453,58 @@
 			// 
 			// groupBox_stretching
 			// 
+			this.groupBox_stretching.Controls.Add(this.button_batch);
+			this.groupBox_stretching.Controls.Add(this.textBox_batchInputPath);
+			this.groupBox_stretching.Controls.Add(this.button_kernelSelectLatest);
 			this.groupBox_stretching.Controls.Add(this.comboBox_kernelsStretch);
 			this.groupBox_stretching.Controls.Add(this.button_stretch);
 			this.groupBox_stretching.Controls.Add(this.label_info_stretchFactor);
+			this.groupBox_stretching.Controls.Add(this.label_info_chunkSize);
 			this.groupBox_stretching.Controls.Add(this.numericUpDown_stretchFactor);
+			this.groupBox_stretching.Controls.Add(this.label_info_overlap);
 			this.groupBox_stretching.Controls.Add(this.label_info_targetBpm);
 			this.groupBox_stretching.Controls.Add(this.numericUpDown_bpmTarget);
 			this.groupBox_stretching.Controls.Add(this.label_info_startBpm);
 			this.groupBox_stretching.Controls.Add(this.numericUpDown_bpmStart);
 			this.groupBox_stretching.Controls.Add(this.button_fft);
 			this.groupBox_stretching.Controls.Add(this.button_normalize);
+			this.groupBox_stretching.Controls.Add(this.numericUpDown_chunkSize);
+			this.groupBox_stretching.Controls.Add(this.numericUpDown_overlap);
 			this.groupBox_stretching.Location = new Point(1470, 347);
 			this.groupBox_stretching.Name = "groupBox_stretching";
-			this.groupBox_stretching.Size = new Size(422, 140);
+			this.groupBox_stretching.Size = new Size(422, 180);
 			this.groupBox_stretching.TabIndex = 27;
 			this.groupBox_stretching.TabStop = false;
 			this.groupBox_stretching.Text = "Time-stretching";
+			// 
+			// button_batch
+			// 
+			this.button_batch.Location = new Point(251, 62);
+			this.button_batch.Name = "button_batch";
+			this.button_batch.Size = new Size(50, 23);
+			this.button_batch.TabIndex = 44;
+			this.button_batch.Text = "Batch";
+			this.button_batch.UseVisualStyleBackColor = true;
+			this.button_batch.Click += this.button_batch_Click;
+			// 
+			// textBox_batchInputPath
+			// 
+			this.textBox_batchInputPath.Location = new Point(6, 63);
+			this.textBox_batchInputPath.Name = "textBox_batchInputPath";
+			this.textBox_batchInputPath.PlaceholderText = "Enter path for batch input ...";
+			this.textBox_batchInputPath.Size = new Size(239, 23);
+			this.textBox_batchInputPath.TabIndex = 43;
+			this.textBox_batchInputPath.Text = "D:\\Musik\\CUDAFFT_TEST\\INPUT";
+			// 
+			// button_kernelSelectLatest
+			// 
+			this.button_kernelSelectLatest.Location = new Point(251, 22);
+			this.button_kernelSelectLatest.Name = "button_kernelSelectLatest";
+			this.button_kernelSelectLatest.Size = new Size(50, 23);
+			this.button_kernelSelectLatest.TabIndex = 38;
+			this.button_kernelSelectLatest.Text = "Latest";
+			this.button_kernelSelectLatest.UseVisualStyleBackColor = true;
+			this.button_kernelSelectLatest.Click += this.button_kernelSelectLatest_Click;
 			// 
 			// comboBox_kernelsStretch
 			// 
@@ -475,7 +517,7 @@
 			// 
 			// button_stretch
 			// 
-			this.button_stretch.Location = new Point(341, 111);
+			this.button_stretch.Location = new Point(341, 151);
 			this.button_stretch.Name = "button_stretch";
 			this.button_stretch.Size = new Size(75, 23);
 			this.button_stretch.TabIndex = 34;
@@ -486,29 +528,47 @@
 			// label_info_stretchFactor
 			// 
 			this.label_info_stretchFactor.AutoSize = true;
-			this.label_info_stretchFactor.Location = new Point(160, 93);
+			this.label_info_stretchFactor.Location = new Point(160, 133);
 			this.label_info_stretchFactor.Name = "label_info_stretchFactor";
 			this.label_info_stretchFactor.Size = new Size(81, 15);
 			this.label_info_stretchFactor.TabIndex = 33;
 			this.label_info_stretchFactor.Text = "Stretch factor:";
 			// 
+			// label_info_chunkSize
+			// 
+			this.label_info_chunkSize.AutoSize = true;
+			this.label_info_chunkSize.Location = new Point(6, 89);
+			this.label_info_chunkSize.Name = "label_info_chunkSize";
+			this.label_info_chunkSize.Size = new Size(64, 15);
+			this.label_info_chunkSize.TabIndex = 37;
+			this.label_info_chunkSize.Text = "Chunk size";
+			// 
 			// numericUpDown_stretchFactor
 			// 
-			this.numericUpDown_stretchFactor.DecimalPlaces = 6;
-			this.numericUpDown_stretchFactor.Increment = new decimal(new int[] { 5, 0, 0, 65536 });
-			this.numericUpDown_stretchFactor.Location = new Point(160, 111);
+			this.numericUpDown_stretchFactor.DecimalPlaces = 15;
+			this.numericUpDown_stretchFactor.Increment = new decimal(new int[] { 1, 0, 0, 196608 });
+			this.numericUpDown_stretchFactor.Location = new Point(160, 151);
 			this.numericUpDown_stretchFactor.Maximum = new decimal(new int[] { 10, 0, 0, 0 });
 			this.numericUpDown_stretchFactor.Minimum = new decimal(new int[] { 5, 0, 0, 196608 });
 			this.numericUpDown_stretchFactor.Name = "numericUpDown_stretchFactor";
-			this.numericUpDown_stretchFactor.Size = new Size(85, 23);
+			this.numericUpDown_stretchFactor.Size = new Size(140, 23);
 			this.numericUpDown_stretchFactor.TabIndex = 32;
 			this.numericUpDown_stretchFactor.Value = new decimal(new int[] { 1, 0, 0, 0 });
 			this.numericUpDown_stretchFactor.ValueChanged += this.numericUpDown_stretchFactor_ValueChanged;
 			// 
+			// label_info_overlap
+			// 
+			this.label_info_overlap.AutoSize = true;
+			this.label_info_overlap.Location = new Point(92, 89);
+			this.label_info_overlap.Name = "label_info_overlap";
+			this.label_info_overlap.Size = new Size(48, 15);
+			this.label_info_overlap.TabIndex = 36;
+			this.label_info_overlap.Text = "Overlap";
+			// 
 			// label_info_targetBpm
 			// 
 			this.label_info_targetBpm.AutoSize = true;
-			this.label_info_targetBpm.Location = new Point(83, 93);
+			this.label_info_targetBpm.Location = new Point(83, 133);
 			this.label_info_targetBpm.Name = "label_info_targetBpm";
 			this.label_info_targetBpm.Size = new Size(71, 15);
 			this.label_info_targetBpm.TabIndex = 31;
@@ -516,9 +576,9 @@
 			// 
 			// numericUpDown_bpmTarget
 			// 
-			this.numericUpDown_bpmTarget.DecimalPlaces = 3;
+			this.numericUpDown_bpmTarget.DecimalPlaces = 4;
 			this.numericUpDown_bpmTarget.Increment = new decimal(new int[] { 5, 0, 0, 65536 });
-			this.numericUpDown_bpmTarget.Location = new Point(83, 111);
+			this.numericUpDown_bpmTarget.Location = new Point(83, 151);
 			this.numericUpDown_bpmTarget.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
 			this.numericUpDown_bpmTarget.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
 			this.numericUpDown_bpmTarget.Name = "numericUpDown_bpmTarget";
@@ -530,7 +590,7 @@
 			// label_info_startBpm
 			// 
 			this.label_info_startBpm.AutoSize = true;
-			this.label_info_startBpm.Location = new Point(6, 93);
+			this.label_info_startBpm.Location = new Point(6, 133);
 			this.label_info_startBpm.Name = "label_info_startBpm";
 			this.label_info_startBpm.Size = new Size(62, 15);
 			this.label_info_startBpm.TabIndex = 29;
@@ -538,9 +598,9 @@
 			// 
 			// numericUpDown_bpmStart
 			// 
-			this.numericUpDown_bpmStart.DecimalPlaces = 3;
+			this.numericUpDown_bpmStart.DecimalPlaces = 4;
 			this.numericUpDown_bpmStart.Increment = new decimal(new int[] { 5, 0, 0, 65536 });
-			this.numericUpDown_bpmStart.Location = new Point(6, 111);
+			this.numericUpDown_bpmStart.Location = new Point(6, 151);
 			this.numericUpDown_bpmStart.Maximum = new decimal(new int[] { 300, 0, 0, 0 });
 			this.numericUpDown_bpmStart.Minimum = new decimal(new int[] { 10, 0, 0, 0 });
 			this.numericUpDown_bpmStart.Name = "numericUpDown_bpmStart";
@@ -705,24 +765,6 @@
 			this.button_moveImage.UseVisualStyleBackColor = true;
 			this.button_moveImage.Click += this.button_moveImage_Click;
 			// 
-			// label_info_overlap
-			// 
-			this.label_info_overlap.AutoSize = true;
-			this.label_info_overlap.Location = new Point(1807, 594);
-			this.label_info_overlap.Name = "label_info_overlap";
-			this.label_info_overlap.Size = new Size(61, 15);
-			this.label_info_overlap.TabIndex = 36;
-			this.label_info_overlap.Text = "Overlap %";
-			// 
-			// label_info_chunkSize
-			// 
-			this.label_info_chunkSize.AutoSize = true;
-			this.label_info_chunkSize.Location = new Point(1721, 594);
-			this.label_info_chunkSize.Name = "label_info_chunkSize";
-			this.label_info_chunkSize.Size = new Size(64, 15);
-			this.label_info_chunkSize.TabIndex = 37;
-			this.label_info_chunkSize.Text = "Chunk size";
-			// 
 			// numericUpDown_zoomImage
 			// 
 			this.numericUpDown_zoomImage.Location = new Point(1147, 497);
@@ -750,14 +792,14 @@
 			this.groupBox_video.Controls.Add(this.numericUpDown_framerate);
 			this.groupBox_video.Location = new Point(1218, 347);
 			this.groupBox_video.Name = "groupBox_video";
-			this.groupBox_video.Size = new Size(246, 300);
+			this.groupBox_video.Size = new Size(246, 180);
 			this.groupBox_video.TabIndex = 40;
 			this.groupBox_video.TabStop = false;
 			this.groupBox_video.Text = "Video rendering";
 			// 
 			// button_renderVideo
 			// 
-			this.button_renderVideo.Location = new Point(165, 271);
+			this.button_renderVideo.Location = new Point(165, 151);
 			this.button_renderVideo.Name = "button_renderVideo";
 			this.button_renderVideo.Size = new Size(75, 23);
 			this.button_renderVideo.TabIndex = 2;
@@ -768,7 +810,7 @@
 			// label_info_fps
 			// 
 			this.label_info_fps.AutoSize = true;
-			this.label_info_fps.Location = new Point(6, 253);
+			this.label_info_fps.Location = new Point(6, 133);
 			this.label_info_fps.Name = "label_info_fps";
 			this.label_info_fps.Size = new Size(26, 15);
 			this.label_info_fps.TabIndex = 1;
@@ -776,7 +818,7 @@
 			// 
 			// numericUpDown_framerate
 			// 
-			this.numericUpDown_framerate.Location = new Point(6, 271);
+			this.numericUpDown_framerate.Location = new Point(6, 151);
 			this.numericUpDown_framerate.Maximum = new decimal(new int[] { 144, 0, 0, 0 });
 			this.numericUpDown_framerate.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
 			this.numericUpDown_framerate.Name = "numericUpDown_framerate";
@@ -784,16 +826,42 @@
 			this.numericUpDown_framerate.TabIndex = 0;
 			this.numericUpDown_framerate.Value = new decimal(new int[] { 20, 0, 0, 0 });
 			// 
+			// label_info_zoomAudio
+			// 
+			this.label_info_zoomAudio.AutoSize = true;
+			this.label_info_zoomAudio.Location = new Point(1807, 623);
+			this.label_info_zoomAudio.Name = "label_info_zoomAudio";
+			this.label_info_zoomAudio.Size = new Size(39, 15);
+			this.label_info_zoomAudio.TabIndex = 41;
+			this.label_info_zoomAudio.Text = "Zoom";
+			// 
+			// label_info_timestamp
+			// 
+			this.label_info_timestamp.AutoSize = true;
+			this.label_info_timestamp.Location = new Point(1721, 623);
+			this.label_info_timestamp.Name = "label_info_timestamp";
+			this.label_info_timestamp.Size = new Size(67, 15);
+			this.label_info_timestamp.TabIndex = 42;
+			this.label_info_timestamp.Text = "Timestamp";
+			// 
+			// progressBar_batch
+			// 
+			this.progressBar_batch.Location = new Point(69, 800);
+			this.progressBar_batch.Name = "progressBar_batch";
+			this.progressBar_batch.Size = new Size(1143, 19);
+			this.progressBar_batch.TabIndex = 43;
+			// 
 			// WindowMain
 			// 
 			this.AutoScaleDimensions = new SizeF(7F, 15F);
 			this.AutoScaleMode = AutoScaleMode.Font;
 			this.ClientSize = new Size(1904, 821);
+			this.Controls.Add(this.progressBar_batch);
+			this.Controls.Add(this.label_info_timestamp);
+			this.Controls.Add(this.label_info_zoomAudio);
 			this.Controls.Add(this.groupBox_video);
 			this.Controls.Add(this.button_info);
 			this.Controls.Add(this.numericUpDown_zoomImage);
-			this.Controls.Add(this.label_info_chunkSize);
-			this.Controls.Add(this.label_info_overlap);
 			this.Controls.Add(this.button_moveImage);
 			this.Controls.Add(this.button_resetImage);
 			this.Controls.Add(this.button_exportImage);
@@ -808,8 +876,6 @@
 			this.Controls.Add(this.button_kernelExecute);
 			this.Controls.Add(this.checkBox_log);
 			this.Controls.Add(this.listBox_pointers);
-			this.Controls.Add(this.numericUpDown_chunkSize);
-			this.Controls.Add(this.numericUpDown_overlap);
 			this.Controls.Add(this.checkBox_invariables);
 			this.Controls.Add(this.panel_kernelArguments);
 			this.Controls.Add(this.button_kernelLoad);
@@ -928,5 +994,11 @@
 		private Button button_renderVideo;
 		private Label label_info_fps;
 		private NumericUpDown numericUpDown_framerate;
+		private Label label_info_zoomAudio;
+		private Label label_info_timestamp;
+		private Button button_kernelSelectLatest;
+		private Button button_batch;
+		private TextBox textBox_batchInputPath;
+		private ProgressBar progressBar_batch;
 	}
 }

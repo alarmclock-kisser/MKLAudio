@@ -224,9 +224,9 @@ namespace MKLAudio
 			return outputBuffers?.IndexHandle ?? pointer;
 		}
 
-		public IntPtr ExecuteAudioKernel(IntPtr objPointer, out float factor, long length = 0, string kernelName = "normalize00", int chunkSize = 1024, float overlap = 0.5f, int samplerate = 44100, int bitdepth = 24, int channels = 2, Dictionary<string, object>? optionalArguments = null, bool log = false)
+		public IntPtr ExecuteAudioKernel(IntPtr objPointer, out double factor, long length = 0, string kernelName = "normalize00", int chunkSize = 1024, float overlap = 0.5f, int samplerate = 44100, int bitdepth = 24, int channels = 2, Dictionary<string, object>? optionalArguments = null, bool log = false)
 		{
-			factor = 1.0f; // Default factor
+			factor = 1.000d; // Default factor
 
 			// Get kernel path
 			string kernelPath = this.Compiler.Files.FirstOrDefault(f => f.Key.Contains(kernelName)).Key ?? "";
@@ -270,8 +270,21 @@ namespace MKLAudio
 			{
 				if (optionalArguments != null && optionalArguments.ContainsKey("factor"))
 				{
-					// Set factor to optional argument if provided (contains "stretch")
-					factor = optionalArguments.ContainsKey("factor") ? Convert.ToSingle(optionalArguments["factor"]) : 1.0f;
+					// Set factor to optional argument if provided (contains "stretch") can be float or double depending on the kernel
+					if (optionalArguments["factor"] is double dFactor)
+					{
+						factor = dFactor;
+					}
+					else if (optionalArguments["factor"] is float fFactor)
+					{
+						factor = fFactor;
+					}
+					else
+					{
+						this.Log("Invalid factor type in optional arguments: " + optionalArguments["factor"].GetType().Name, "", 2);
+						return IntPtr.Zero;
+					}
+
 				}
 				else
 				{
@@ -283,7 +296,7 @@ namespace MKLAudio
 					}
 				}
 
-					IntPtr fftPointer = this.ExecuteFFT(objPointer, 'f', chunkSize, overlap, true, log);
+				IntPtr fftPointer = this.ExecuteFFT(objPointer, 'f', chunkSize, overlap, true, log);
 				if (fftPointer == IntPtr.Zero)
 				{
 					return IntPtr.Zero;
