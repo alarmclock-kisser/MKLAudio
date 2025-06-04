@@ -141,6 +141,17 @@ namespace MKLAudio
 			{
 				// Get bpm and stretch factor
 				float initialBpm = track.Bpm;
+				if (initialBpm * 2 <= this.TargetBpm)
+				{
+					initialBpm *= 2f; // Double the BPM if it's too low
+					this.Log("Track '" + track.Name + "' had BPM: " + track.Bpm, "Doubling BPM to " + initialBpm, 2);
+				}
+				else if (initialBpm / 2 >= this.TargetBpm)
+				{
+					initialBpm /= 2f; // Halve the BPM if it's too high
+					this.Log("Track '" + track.Name + "' had BPM: " + track.Bpm, "Halving BPM to " + initialBpm, 2);
+				}
+
 				if (initialBpm < 10f || initialBpm > 300f)
 				{
 					this.Log("Track '" + track.Name + "' has an invalid BPM: " + initialBpm, "Skipping", 1);
@@ -176,7 +187,7 @@ namespace MKLAudio
 					this.ChunkSize,
 					this.Overlap,
 					optionalArgs,
-					true
+					false
 				);
 
 				this.Log("Processed track '" + track.Name, "BPM now: " + track.Bpm, 1);

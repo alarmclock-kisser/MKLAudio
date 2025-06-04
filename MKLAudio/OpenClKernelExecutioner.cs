@@ -98,7 +98,7 @@ namespace MKLAudio
 			Stopwatch sw = Stopwatch.StartNew();
 
 			// Load kernel from file, else abort
-			this.Compiler.LoadKernel("", file);
+			this.Compiler.LoadKernel("", file, null, false, log);
 			if (this.Kernel == null)
 			{
 				return pointer;
@@ -239,7 +239,7 @@ namespace MKLAudio
 			// Load kernel if not loaded
 			if (this.Kernel == null || this.KernelFile != kernelPath)
 			{
-				this.Compiler.LoadKernel(kernelName);
+				this.Compiler.LoadKernel(kernelName, "", null, false, log);
 				if (this.Kernel == null || this.KernelFile == null || !this.KernelFile.Contains("\\Audio\\"))
 				{
 					if (log)
@@ -307,7 +307,7 @@ namespace MKLAudio
 				// Load kernel if not loaded
 				if (this.Kernel == null || this.KernelFile != kernelPath)
 				{
-					this.Compiler.LoadKernel(kernelName);
+					this.Compiler.LoadKernel(kernelName, "", null, false, log);
 					if (this.Kernel == null || this.KernelFile == null || !this.KernelFile.Contains("\\Audio\\"))
 					{
 						if (log)
@@ -439,7 +439,7 @@ namespace MKLAudio
 			// Free input buffer if necessary
 			if (outputMem.IndexHandle != IntPtr.Zero)
 			{
-				long freed = this.MemR.FreeBuffer(objPointer, true);
+				long freed = this.MemR.FreeBuffer(objPointer, true, log);
 				if (freed > 0)
 				{
 					if (log)

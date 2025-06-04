@@ -87,13 +87,16 @@ namespace MKLAudio
 
 
 		// Free buffer
-		public long FreeBuffer(IntPtr pointer, bool readable = false)
+		public long FreeBuffer(IntPtr pointer, bool readable = false, bool log = false)
 		{
 			ClMem? mem = this.GetBuffer(pointer);
 			if (mem == null)
 			{
 				// If no buffer found, return 0
-				// this.Log("No buffer found to free", pointer.ToString("X16"));
+				if (log)
+				{
+					this.Log("Failed to free buffer", "No memory found for pointer", 1);
+				}
 				return 0;
 			}
 
@@ -105,7 +108,10 @@ namespace MKLAudio
 				CLResultCode err = CL.ReleaseMemoryObject(buffer);
 				if (err != CLResultCode.Success)
 				{
-					this.Log("Failed to release buffer", buffer.Handle.ToString("X16"), 1);
+					if (log)
+					{
+						this.Log("Failed to release buffer", buffer.Handle.ToString("X16"), 1);
+					}
 				}
 			}
 

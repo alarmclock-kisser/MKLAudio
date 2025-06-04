@@ -781,7 +781,7 @@ namespace MKLAudio
 			}
 
 			// Reload kernel
-			this.KernelCompiler?.LoadKernel(kernelBaseName + kernelVersion, "", null, false);
+			this.KernelCompiler?.LoadKernel(kernelBaseName + kernelVersion, "", null, false, log);
 
 			// Log factor & set new bpm
 			if (factor != 1.00f)

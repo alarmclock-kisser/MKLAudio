@@ -797,7 +797,7 @@ namespace MKLAudio
 			}
 		}
 
-		public TextBox? BuildInputPanel(Panel refPanel, bool showInvariables = true)
+		public TextBox? BuildInputPanel(Panel refPanel, bool showInvariables = true, bool log = false)
 		{
 			// Set input panel
 			this.InputPanel = refPanel;
@@ -811,7 +811,10 @@ namespace MKLAudio
 			// Check if arguments are empty
 			if (arguments.Count == 0)
 			{
-				this.Log("No kernel arguments");
+				if (log)
+				{
+					this.Log("No kernel arguments found");
+				}
 				return null;
 			}
 
@@ -936,7 +939,10 @@ namespace MKLAudio
 				}
 				else
 				{
-					this.Log("Unsupported argument type or buffer argument found: " + argType.Name + " '" + argName + "'");
+					if (log)
+					{
+						this.Log("Unsupported argument type: " + argType.Name + " '" + argName + "'", "", 2);
+					}
 					inputControl = new TextBox();
 					inputBufferTextbox = (TextBox) inputControl;
 				}
@@ -1116,7 +1122,7 @@ namespace MKLAudio
 
 
 		// Load
-		public CLKernel? LoadKernel(string kernelName = "", string filePath = "", Panel? inputPanelArg = null, bool showInvariables = true)
+		public CLKernel? LoadKernel(string kernelName = "", string filePath = "", Panel? inputPanelArg = null, bool showInvariables = true, bool log = false)
 		{
 			// Verify panel
 			Panel inputPanel = inputPanelArg ?? this.InputPanel ?? new Panel();
@@ -1134,11 +1140,14 @@ namespace MKLAudio
 			// Compile kernel if not cached
 			if (this.Kernel != null && this.KernelFile == filePath)
 			{
-				this.Log("Kernel already loaded: " + kernelName, "", 1);
+				if (log)
+				{
+					this.Log("Kernel already loaded: " + kernelName, "", 1);
+				}
 
 				if (inputPanelArg != null)
 				{
-					this.BuildInputPanel(inputPanel, showInvariables);
+					this.BuildInputPanel(inputPanel, showInvariables, log);
 				}
 
 				return this.Kernel;
@@ -1150,22 +1159,29 @@ namespace MKLAudio
 			// Check if kernel is null
 			if (this.Kernel == null)
 			{
-				this.Log("Kernel is null");
+				if (log)
+				{
+					this.Log("Kernel is null");
+				}
 				return null;
 			}
 			else
 			{
 				// String of args like "(byte*)'pixels', (int)'width', (int)'height'"
 				string argNamesString = string.Join(", ", this.Arguments.Keys.Select((arg, i) => $"({this.Arguments.Values.ElementAt(i).Name}) '{arg}'"));
-				this.Log("Kernel loaded: '" + kernelName + "'", "", 1);
-				this.Log("Kernel arguments: [" + argNamesString + "]", "", 1);
+				
+				if (log)
+				{
+					this.Log("Kernel loaded: '" + kernelName + "'", "", 1);
+					this.Log("Kernel arguments: [" + argNamesString + "]", "", 1);
+				}
 			}
 
 			// TryAdd to cached
 			this.kernelCache.TryAdd(this.Kernel.Value, filePath);
 
 			// Build input panel
-			this.BuildInputPanel(inputPanel, showInvariables);
+			this.BuildInputPanel(inputPanel, showInvariables, log);
 
 			return kernel;
 		}
