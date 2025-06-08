@@ -101,6 +101,9 @@
 			this.label_info_zoomAudio = new Label();
 			this.label_info_timestamp = new Label();
 			this.progressBar_batch = new ProgressBar();
+			this.comboBox_cudaDevices = new ComboBox();
+			this.button_cudaInfo = new Button();
+			this.checkBox_cufft = new CheckBox();
 			((System.ComponentModel.ISupportInitialize) this.pictureBox_wave).BeginInit();
 			((System.ComponentModel.ISupportInitialize) this.numericUpDown_zoom).BeginInit();
 			((System.ComponentModel.ISupportInitialize) this.numericUpDown_overlap).BeginInit();
@@ -294,7 +297,7 @@
 			this.numericUpDown_overlap.Name = "numericUpDown_overlap";
 			this.numericUpDown_overlap.Size = new Size(85, 23);
 			this.numericUpDown_overlap.TabIndex = 18;
-			this.numericUpDown_overlap.Value = new decimal(new int[] { 5, 0, 0, 65536 });
+			this.numericUpDown_overlap.Value = new decimal(new int[] { 30, 0, 0, 131072 });
 			// 
 			// numericUpDown_chunkSize
 			// 
@@ -304,7 +307,7 @@
 			this.numericUpDown_chunkSize.Name = "numericUpDown_chunkSize";
 			this.numericUpDown_chunkSize.Size = new Size(80, 23);
 			this.numericUpDown_chunkSize.TabIndex = 19;
-			this.numericUpDown_chunkSize.Value = new decimal(new int[] { 512, 0, 0, 0 });
+			this.numericUpDown_chunkSize.Value = new decimal(new int[] { 8192, 0, 0, 0 });
 			// 
 			// listBox_pointers
 			// 
@@ -453,6 +456,7 @@
 			// 
 			// groupBox_stretching
 			// 
+			this.groupBox_stretching.Controls.Add(this.checkBox_cufft);
 			this.groupBox_stretching.Controls.Add(this.button_batch);
 			this.groupBox_stretching.Controls.Add(this.textBox_batchInputPath);
 			this.groupBox_stretching.Controls.Add(this.button_kernelSelectLatest);
@@ -851,11 +855,41 @@
 			this.progressBar_batch.Size = new Size(1143, 19);
 			this.progressBar_batch.TabIndex = 43;
 			// 
+			// comboBox_cudaDevices
+			// 
+			this.comboBox_cudaDevices.FormattingEnabled = true;
+			this.comboBox_cudaDevices.Location = new Point(447, 11);
+			this.comboBox_cudaDevices.Name = "comboBox_cudaDevices";
+			this.comboBox_cudaDevices.Size = new Size(200, 23);
+			this.comboBox_cudaDevices.TabIndex = 44;
+			// 
+			// button_cudaInfo
+			// 
+			this.button_cudaInfo.Location = new Point(653, 12);
+			this.button_cudaInfo.Name = "button_cudaInfo";
+			this.button_cudaInfo.Size = new Size(23, 23);
+			this.button_cudaInfo.TabIndex = 45;
+			this.button_cudaInfo.Text = "i";
+			this.button_cudaInfo.UseVisualStyleBackColor = true;
+			this.button_cudaInfo.Click += this.button_cudaInfo_Click;
+			// 
+			// checkBox_cufft
+			// 
+			this.checkBox_cufft.AutoSize = true;
+			this.checkBox_cufft.Location = new Point(341, 107);
+			this.checkBox_cufft.Name = "checkBox_cufft";
+			this.checkBox_cufft.Size = new Size(65, 19);
+			this.checkBox_cufft.TabIndex = 45;
+			this.checkBox_cufft.Text = "CuFFT?";
+			this.checkBox_cufft.UseVisualStyleBackColor = true;
+			// 
 			// WindowMain
 			// 
 			this.AutoScaleDimensions = new SizeF(7F, 15F);
 			this.AutoScaleMode = AutoScaleMode.Font;
 			this.ClientSize = new Size(1904, 821);
+			this.Controls.Add(this.button_cudaInfo);
+			this.Controls.Add(this.comboBox_cudaDevices);
 			this.Controls.Add(this.progressBar_batch);
 			this.Controls.Add(this.label_info_timestamp);
 			this.Controls.Add(this.label_info_zoomAudio);
@@ -1000,5 +1034,8 @@
 		private Button button_batch;
 		private TextBox textBox_batchInputPath;
 		private ProgressBar progressBar_batch;
+		private ComboBox comboBox_cudaDevices;
+		private Button button_cudaInfo;
+		private CheckBox checkBox_cufft;
 	}
 }

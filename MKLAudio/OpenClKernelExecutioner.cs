@@ -54,7 +54,7 @@ namespace MKLAudio
 		// ----- ----- -----  METHODS  ----- ----- ----- \\
 		public void Log(string message = "", string inner = "", int indent = 0)
 		{
-			string msg = "[Exec]: " + new string(' ', indent * 2) + message;
+			string msg = "[CL-Exec]: " + new string(' ', indent * 2) + message;
 
 			if (!string.IsNullOrEmpty(inner))
 			{

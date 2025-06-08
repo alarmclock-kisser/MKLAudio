@@ -1,5 +1,6 @@
 ﻿using NAudio.Wave;
 using OpenTK.Mathematics;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Drawing;
 using System.Drawing.Drawing2D;
@@ -23,7 +24,7 @@ namespace MKLAudio
 		public Color GraphColor = Color.MediumSlateBlue;
 
 		// Audio Data
-		private readonly List<AudioObject> _tracks = new();
+		private readonly List<AudioObject> _tracks = [];
 		private readonly SynchronizationContext _uiContext;
 		private CancellationTokenSource _waveformCancellation = new();
 
@@ -1239,6 +1240,8 @@ namespace MKLAudio
 			this.Length = finalOutput.Length;
 			this.Pointer = nullPointer ? IntPtr.Zero : this.Pointer; // Updated Pointer assignment based on nullPointer
 		}
+
+		
 
 		public void AggregateComplexes(List<Vector2[]> complexChunks)
 		{

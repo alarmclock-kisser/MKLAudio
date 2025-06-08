@@ -12,6 +12,8 @@ namespace MKLAudio
 		public VideoHandling VideoH;
 
 		public OpenClService Service;
+		public CudaService Cuda;
+
 
 		public BatchProcessor? BatchP = null;
 
@@ -36,10 +38,12 @@ namespace MKLAudio
 			this.ImageH = new ImageHandling(this.Repopath, this.listBox_images, this.pictureBox_image, this.numericUpDown_zoomImage, this.label_imageMeta);
 
 			this.Service = new OpenClService(this.Repopath, this.listBox_log, this.comboBox_devices);
+			this.Cuda = new CudaService(this.Repopath, this.listBox_log, this.comboBox_cudaDevices, this.progressBar_batch);
 
 			this.VideoH = new VideoHandling(this.Repopath, this.AudioH, this.ImageH, this.Service);
 
 			this.Service.SelectDeviceLike("Intel");
+			this.Cuda.SelectDeviceLike("RTX");
 
 			this.Service.KernelCompiler?.FillGenericKernelNamesCombobox(this.comboBox_kernelNames);
 			this.Service.FillSpecificKernels(this.comboBox_kernelsStretch, "timestretch");
@@ -197,10 +201,22 @@ namespace MKLAudio
 				return;
 			}
 
-			this.Service.MoveAudio(this.AudioH.CurrentTrack, (int) this.numericUpDown_chunkSize.Value, (float) this.numericUpDown_overlap.Value, 1.0f, this.checkBox_log.Checked);
+			// Try find mem obj in service
+			if (this.Service.MemoryRegister?.GetBuffer(this.AudioH.CurrentTrack.Pointer) == null)
+			{
+				if (this.Cuda.MemoryRegister?.FindMemory(this.AudioH.CurrentTrack.Pointer, true) != null)
+				{
+					this.Cuda.PullAudio(this.AudioH.CurrentTrack, 1.0f, this.checkBox_log.Checked);
+				}
+			}
+			else
+			{
+				this.Service.MoveAudio(this.AudioH.CurrentTrack, (int) this.numericUpDown_chunkSize.Value, (float) this.numericUpDown_overlap.Value, 1.0f, this.checkBox_log.Checked);
+			}
 
 			this.AudioH.RefreshView();
 			this.Service.FillPointers(this.listBox_pointers);
+			this.Cuda.FillPointers(this.listBox_pointers);
 		}
 
 		private void button_fft_Click(object sender, EventArgs e)
@@ -212,7 +228,17 @@ namespace MKLAudio
 				return;
 			}
 
-			this.Service.PerformFFT(this.AudioH.CurrentTrack, (int) this.numericUpDown_chunkSize.Value, (float) this.numericUpDown_overlap.Value, this.checkBox_log.Checked);
+			if (this.checkBox_cufft.Checked && this.Cuda.Initialized)
+			{
+				
+				// Use CUDA FFT
+				this.Cuda.PerformFFT(this.AudioH.CurrentTrack, (int) this.numericUpDown_chunkSize.Value, (float) this.numericUpDown_overlap.Value, this.checkBox_log.Checked);
+			}
+			else
+			{
+				// Use OpenCL FFT
+				this.Service.PerformFFT(this.AudioH.CurrentTrack, (int) this.numericUpDown_chunkSize.Value, (float) this.numericUpDown_overlap.Value, this.checkBox_log.Checked);
+			}
 
 			this.AudioH.RefreshView();
 			this.Service.FillPointers(this.listBox_pointers);
@@ -511,6 +537,14 @@ namespace MKLAudio
 
 			this.BatchP?.Dispose();
 			this.BatchP = new BatchProcessor(this.Repopath, inputPath, outputPath, this.Service, kernelName, targetBpm, this.listBox_log, this.progressBar_batch);
+
+
+			this.BatchP.Log(this.BatchP.Times.Count + " files processed in " + this.BatchP.Times.Sum() + " ms.");
+		}
+
+		private void button_cudaInfo_Click(object sender, EventArgs e)
+		{
+
 		}
 	}
 }

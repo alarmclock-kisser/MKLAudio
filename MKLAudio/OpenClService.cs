@@ -62,7 +62,7 @@ namespace MKLAudio
 		// Log
 		public void Log(string message = "", string inner = "", int indent = 0)
 		{
-			string msg = "[Context]: " + new string(' ', indent * 2) + message;
+			string msg = "[OpenCL]: " + new string(' ', indent * 2) + message;
 
 			if (!string.IsNullOrEmpty(inner))
 			{
@@ -1011,8 +1011,15 @@ namespace MKLAudio
 			int minLag = (int) (60f / maxBPM / hopTime);
 			int maxLag = (int) (60f / minBPM / hopTime);
 
-			if (maxLag >= len) maxLag = len - 1;
-			if (minLag < 1) minLag = 1;
+			if (maxLag >= len)
+			{
+				maxLag = len - 1;
+			}
+
+			if (minLag < 1)
+			{
+				minLag = 1;
+			}
 
 			float bestCorr = float.NegativeInfinity;
 			int bestLag = minLag;

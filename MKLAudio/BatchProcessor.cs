@@ -1,8 +1,10 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+
 
 namespace MKLAudio
 {
@@ -21,7 +23,7 @@ namespace MKLAudio
 		public string StretchKernel { get; set; } = "timestretch";
 		public float TargetBpm { get; set; } = 100f;
 
-
+		public List<long> Times { get; set; } = [];
 
 
 		private AudioHandling AudioH;
@@ -61,10 +63,10 @@ namespace MKLAudio
 
 
 
-			this.ProcessLinear();
+			this.Times = this.ProcessIteratively();
 
 
-			this.ExportAll();
+			// this.ExportAll();
 		}
 
 
@@ -93,6 +95,7 @@ namespace MKLAudio
 			// Reset progressbar
 			this.ProgressBar.Value = 0;
 
+			this.AudioH?.Dispose();
 		}
 
 		public void VerifyPaths()
@@ -119,19 +122,21 @@ namespace MKLAudio
 							   file.EndsWith(".flac", StringComparison.OrdinalIgnoreCase))
 				.ToList();
 
-		public void ProcessLinear()
+		public List<long> ProcessLinear()
 		{
-			// Log action
+			// Log action & results times list
+			List<long> times = [];
 			this.Log("Processing files in linear order...", this.InputFiles.Count + " files");
 
 			// Reset progressbar
 			this.ProgressBar.Value = 0;
-			this.ProgressBar.Maximum = this.InputFiles.Count;
+			this.ProgressBar.Maximum = this.InputFiles.Count * 10;
 
 			// Step 1) Load every file as obj with audioH
 			foreach (string file in this.InputFiles)
 			{
 				this.AudioH.AddTrackAsync(file);
+				this.ProgressBar.Value += 1;
 			}
 			this.Log("Loaded " + this.AudioH.Tracks.Count + " tracks.");
 
@@ -139,6 +144,9 @@ namespace MKLAudio
 			this.Log("Processing tracks with OpenCL...", this.AudioH.Tracks.Count + " tracks");
 			foreach(AudioObject track in this.AudioH.Tracks)
 			{
+				// STOPWATCH
+				Stopwatch sw = Stopwatch.StartNew();
+
 				// Get bpm and stretch factor
 				float initialBpm = track.Bpm;
 				if (initialBpm * 2 <= this.TargetBpm)
@@ -190,14 +198,112 @@ namespace MKLAudio
 					false
 				);
 
-				this.Log("Processed track '" + track.Name, "BPM now: " + track.Bpm, 1);
+				// Stop stopwatch and log time
+				sw.Stop();
+				this.Log("Processed track '" + track.Name + ", BPM now: " + track.Bpm, sw.ElapsedMilliseconds + " ms", 1);
+				times.Add(sw.ElapsedMilliseconds);
+				this.ProgressBar.Value += 9;
 			}
 
 			this.Log("Finished processing tracks.");
+			this.ProgressBar.Value = 0;
+			this.ProgressBar.Maximum = 0;
 
 
+			return times;
+		}
+
+		public List<long> ProcessIteratively()
+		{
+			// Log action & results times list
+			List<long> times = [];
+			this.Log("Processing files in linear order...", this.InputFiles.Count + " files");
+
+			// Reset progressbar
+			this.ProgressBar.Value = 0;
+			this.ProgressBar.Maximum = this.InputFiles.Count * 10;
+
+			// Step 1) Iterate over loading -> processing -> exporting
+			foreach (string file in this.InputFiles)
+			{
+				Stopwatch sw = Stopwatch.StartNew();
+
+				var obj = this.AudioH.AddTrackAsync(file);
+				this.ProgressBar.Value += 1;
+	
+				this.Log("Loaded " + this.AudioH.Tracks.Count + " tracks.");
+
+				// Step 2) Process every track with OpenCL
+				this.Log("Processing tracks with OpenCL...", this.AudioH.Tracks.Count + " tracks");
+			
+				// Get bpm and stretch factor
+				float initialBpm = obj.Bpm;
+				if (initialBpm * 2 <= this.TargetBpm)
+				{
+					initialBpm *= 2f; // Double the BPM if it's too low
+					this.Log("Track '" + obj.Name + "' had BPM: " + obj.Bpm, "Doubling BPM to " + initialBpm, 2);
+				}
+				else if (initialBpm / 2 >= this.TargetBpm)
+				{
+					initialBpm /= 2f; // Halve the BPM if it's too high
+					this.Log("Track '" + obj.Name + "' had BPM: " + obj.Bpm, "Halving BPM to " + initialBpm, 2);
+				}
+
+				if (initialBpm < 10f || initialBpm > 300f)
+				{
+					this.Log("Track '" + obj.Name + "' has an invalid BPM: " + initialBpm, "Skipping", 1);
+					continue;
+				}
+				double stretchFactor = initialBpm / this.TargetBpm;
+
+				// Get optional args
+				Dictionary<string, object> optionalArgs;
+				if (this.StretchKernel.ToLower().Contains("double"))
+				{
+					// Double kernel
+					optionalArgs = new()
+				{
+					{ "factor", (double) stretchFactor}
+				};
+				}
+				else
+				{
+					optionalArgs = new()
+				{
+					{ "factor", (float) stretchFactor }
+				};
+				}
+
+				// Log action
+				this.Log("Processing track '" + obj.Name + "' with initial BPM: " + obj.Bpm, "stretch factor: " + stretchFactor, 1);
+
+				// Exec
+				this.Service.ExecuteAudioKernel(
+					obj,
+					this.StretchKernel, "",
+					this.ChunkSize,
+					this.Overlap,
+					optionalArgs,
+					false
+				);
+
+				// Stop stopwatch and log time
+				sw.Stop();
+				this.Log("Processed track '" + obj.Name + ", BPM now: " + obj.Bpm, sw.ElapsedMilliseconds + " ms", 1);
+				times.Add(sw.ElapsedMilliseconds);
+				this.ProgressBar.Value += 9;
+
+				obj.Export(this.OutputPath);
+
+				obj.Dispose();
+			}
+
+			this.Log("Finished processing tracks.");
+			this.ProgressBar.Value = 0;
+			this.ProgressBar.Maximum = 0;
 
 
+			return times;
 		}
 
 		public void ExportAll()

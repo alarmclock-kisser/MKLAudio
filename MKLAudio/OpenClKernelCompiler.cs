@@ -72,7 +72,7 @@ namespace MKLAudio
 		// Log
 		public void Log(string message = "", string inner = "", int indent = 0)
 		{
-			string msg = "[Compiler]: " + new string(' ', indent * 2) + message;
+			string msg = "[CL-Compiler]: " + new string(' ', indent * 2) + message;
 
 			if (!string.IsNullOrEmpty(inner))
 			{
